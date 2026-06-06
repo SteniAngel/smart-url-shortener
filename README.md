@@ -262,6 +262,8 @@ Backend API: http://localhost:8000
 
 
 ## Author
+* **Name:** Steni Angel S
+* **Email:** [steniangels@gmail.com](mailto:steniangels@gmail.com)
+* **Project Repository:** https://github.com/SteniAngel/smart-url-shortener
 
-- **Name:** Steni Angel S
-- **Email:** steniangels@gmail.com
+
