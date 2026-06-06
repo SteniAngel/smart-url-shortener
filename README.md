@@ -239,6 +239,28 @@ cd backend && python -m pytest -v && cd ../frontend && npm test
 | Memoization (useMemo) | No redundant computations per render |
 | AbortController | Cancels stale API requests |
 
+## Run the Project
+### Backend
+```bash
+cd backend
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+### Open in Browser
+```text
+Frontend: http://localhost:5173
+Backend API: http://localhost:8000
+```
+
+
 ## Author
 
 - **Name:** Steni Angel S
