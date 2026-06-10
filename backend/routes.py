@@ -67,4 +67,6 @@ def redirect(
     if not url_data:
         raise HTTPException(status_code=404, detail="Short URL not found")
 
-    return RedirectResponse(url=url_data["original_url"])
+    response = RedirectResponse(url=url_data["original_url"], status_code=302)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response

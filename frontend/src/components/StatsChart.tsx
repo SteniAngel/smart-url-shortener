@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { UrlData } from "../types";
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -17,62 +18,162 @@ interface StatsChartProps {
   loading: boolean;
 }
 
-export default function StatsChart({ urls, loading }: StatsChartProps) {
-  const totalClicks = useMemo(() => urls.reduce((sum, item) => sum + item.clicks, 0), [urls]);
+export default function StatsChart({
+  urls,
+  loading,
+}: StatsChartProps) {
+  const chartData = useMemo(() => {
+    // Build last 14 days
+    const days: Record<string, { clicks: number; creations: number }> = {};
+    const today = new Date();
+    
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const day = d.getDate();
+      const ordinal = (n: number) => {
+        if (n > 3 && n < 21) return n + "th";
+        switch (n % 10) { case 1: return n + "st"; case 2: return n + "nd"; case 3: return n + "rd"; default: return n + "th"; }
+      };
+      const weekday = d.toLocaleDateString("en-US", { weekday: "short" });
+      const key = `${ordinal(day)} ${weekday}`;
+      days[key] = { clicks: 0, creations: 0 };
+    }
 
-  const topUrl = useMemo(
-    () => [...urls].sort((a, b) => b.clicks - a.clicks)[0],
-    [urls],
-  );
+    // Fill in actual data
+    urls.forEach((item) => {
+      const d = new Date(item.created_at);
+      const day = d.getDate();
+      const ordinal = (n: number) => {
+        if (n > 3 && n < 21) return n + "th";
+        switch (n % 10) { case 1: return n + "st"; case 2: return n + "nd"; case 3: return n + "rd"; default: return n + "th"; }
+      };
+      const weekday = d.toLocaleDateString("en-US", { weekday: "short" });
+      const key = `${ordinal(day)} ${weekday}`;
+      if (days[key]) {
+        days[key].clicks += item.clicks;
+        days[key].creations += 1;
+      }
+    });
 
-  const chartData = useMemo(
-    () =>
-      [...urls]
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .map((item) => ({
-          date: new Date(item.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-          clicks: item.clicks,
-          creations: 1,
-        })),
-    [urls],
-  );
+    return Object.entries(days).map(([date, data]) => ({
+      date,
+      clicks: data.clicks,
+      creations: data.creations,
+    }));
+  }, [urls]);
 
   if (loading) {
     return (
-      <div className="chart-skeleton" role="status" aria-live="polite">
+      <div
+        className="chart-skeleton"
+        role="status"
+        aria-live="polite"
+      >
         <div className="skeleton-chart" />
       </div>
     );
   }
 
   if (!urls.length) {
-    return <p className="empty-state">No analytics available yet.</p>;
+    return (
+      <p className="empty-state">
+        No analytics available yet.
+      </p>
+    );
   }
 
   return (
-    <div className="chart-card">
-      <div className="chart-summary">
-        <div>
-          <span>Total clicks</span>
-          <strong>{totalClicks}</strong>
-        </div>
-        <div>
-          <span>Top link</span>
-          <strong>{topUrl?.short_code ?? "—"}</strong>
-        </div>
-      </div>
-      <ResponsiveContainer width="100%" height={320}>
-        <ComposedChart data={chartData} margin={{ top: 8, right: 24, left: 0, bottom: 8 }}>
-          <CartesianGrid stroke="#e8eef9" strokeDasharray="3 3" />
-          <XAxis dataKey="date" tick={{ fill: "#6c7a98" }} />
-          <YAxis tick={{ fill: "#6c7a98" }} />
+    <div className="chart-card reference-chart">
+      <h3 className="chart-title">
+        Recent Statistics of Click Counts
+      </h3>
+
+      <ResponsiveContainer
+        width="100%"
+        height={420}
+      >
+        <ComposedChart
+          data={chartData}
+          margin={{
+            top: 20,
+            right: 20,
+            left: 10,
+            bottom: 10,
+          }}
+        >
+          <CartesianGrid
+            stroke="#e5e5e5"
+            horizontal={true}
+            vertical={true}
+          />
+
+          <XAxis
+            dataKey="date"
+            tick={{
+              fill: "#666",
+              fontSize: 11,
+            }}
+            height={40}
+            interval={0}
+          />
+
+          <YAxis
+            tick={{
+              fill: "#666",
+              fontSize: 12,
+            }}
+          />
+
           <Tooltip />
-          <Legend verticalAlign="top" height={36} />
-          <Line type="monotone" dataKey="clicks" stroke="#1e7bff" strokeWidth={3} dot={{ r: 4 }} />
-          <Bar dataKey="creations" fill="#46b3ff" barSize={18} />
+
+          <Legend
+            verticalAlign="top"
+            align="center"
+            height={50}
+            content={() => (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 30, alignItems: 'center', marginTop: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-block', width: 40, height: 14, background: '#e8e8e8', border: '1.5px solid #5cb85c' }}></span>
+                  <span style={{ color: '#666', fontSize: 13 }}>URL Clicks</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-block', width: 40, height: 14, background: '#5bc0de' }}></span>
+                  <span style={{ color: '#666', fontSize: 13 }}>URL Creations</span>
+                </div>
+              </div>
+            )}
+          />
+
+          {/* Grey growth shadow */}
+          <Area
+            type="monotone"
+            dataKey="clicks"
+            name="URL Clicks"
+            fill="#e8e8e8"
+            fillOpacity={0.9}
+            stroke="#5cb85c"
+            strokeWidth={2}
+          />
+
+          {/* Growth line */}
+          <Line
+            type="monotone"
+            dataKey="clicks"
+            stroke="#66c7c7"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+            legendType="none"
+          />
+
+          {/* URL creation bars */}
+          <Bar
+            dataKey="creations"
+            name="URL Creations"
+            fill="#5bc0de"
+            barSize={36}
+          />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

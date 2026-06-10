@@ -38,6 +38,9 @@ async def add_security_headers(request, call_next):
             "X-Frame-Options": "DENY",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "X-XSS-Protection": "1; mode=block",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
         }
     )
     return response

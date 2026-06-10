@@ -30,7 +30,7 @@ export default function UrlForm({ onShortened }: UrlFormProps) {
   const helperText = useMemo(() => {
     if (error) return error;
     if (statusMessage) return statusMessage;
-    return "Enter a URL to create a short, shareable link.";
+    return "";
   }, [error, statusMessage]);
 
   const handleSubmit = useCallback(
@@ -52,7 +52,6 @@ export default function UrlForm({ onShortened }: UrlFormProps) {
         return;
       }
 
-      // Cancel any in-flight request
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -72,11 +71,12 @@ export default function UrlForm({ onShortened }: UrlFormProps) {
         setLoading(false);
       }
     },
-    [onShortened, url],
+    [onShortened, url]
   );
 
   const handleCopy = useCallback(async () => {
     if (!shortUrl) return;
+
     try {
       await navigator.clipboard.writeText(shortUrl);
       setCopied(true);
@@ -89,32 +89,31 @@ export default function UrlForm({ onShortened }: UrlFormProps) {
 
   return (
     <form className="url-form" onSubmit={handleSubmit} noValidate>
-      <div className="form-row">
-        <label htmlFor="original-url" className="sr-only">
-          Original URL
-        </label>
-        <input
-          id="original-url"
-          name="original-url"
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Enter URL"
-          aria-label="Original URL"
-          autoComplete="url"
-          required
-          inputMode="url"
-          maxLength={8192}
-        />
-        <Button type="submit" loading={loading}>
-          Shorten
-        </Button>
-      </div>
 
-      <div aria-live="polite" className="form-footer">
-        <StatusMessage type={error ? "error" : statusMessage ? "success" : "info"}>
-          {helperText}
-        </StatusMessage>
+      <div className="form-group">
+
+        <div className="form-row">
+          <input
+            id="original-url"
+            name="original-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Enter your orginal URL eg. http://demos.nelliwinne.net/URLShorterner/"
+            autoComplete="url"
+            required
+          />
+
+          <Button type="submit" loading={loading} icon={<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><rect x="9" y="2" width="12" height="12" fill="#2a6496" stroke="white" strokeWidth="2.5" /><rect x="2" y="9" width="12" height="12" fill="#2a6496" stroke="white" strokeWidth="2.5" /><rect x="2" y="9" width="12" height="6" fill="white" stroke="none" /></svg>}>
+            Shorten URL
+          </Button>
+        </div>
+
+        {/* ✅ MOVED BELOW INPUT BOX */}
+        <p className="public-info-text">
+          All the shortened URLs and their analytics are public
+        </p>
+
       </div>
 
       {shortUrl && (
@@ -125,7 +124,14 @@ export default function UrlForm({ onShortened }: UrlFormProps) {
               {shortUrl}
             </a>
           </div>
-          <Button type="button" variant="success" className="copy-link-button" onClick={handleCopy} icon="📋">
+
+          <Button
+            type="button"
+            variant="success"
+            className="copy-link-button"
+            onClick={handleCopy}
+            icon="📋"
+          >
             {copied ? "Copied!" : "Copy link"}
           </Button>
         </div>

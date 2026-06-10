@@ -28,7 +28,7 @@ def get_all_urls(page: int = 1, page_size: int = 20) -> Tuple[List[Dict[str, Any
 
     offset = (page - 1) * page_size
     cursor.execute(
-        "SELECT * FROM urls ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        "SELECT * FROM urls ORDER BY COALESCE(last_accessed, created_at) DESC LIMIT ? OFFSET ?",
         (page_size, offset),
     )
     items = [_row_to_dict(row) for row in cursor.fetchall()]
